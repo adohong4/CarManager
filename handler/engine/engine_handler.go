@@ -16,7 +16,7 @@ type EngineHandler struct {
 	service service.EngineServiceInterface
 }
 
-func NewEngineService(service service.EngineServiceInterface) *EngineHandler {
+func NewEngineHandler(service service.EngineServiceInterface) *EngineHandler {
 	return &EngineHandler{
 		service: service,
 	}
