@@ -10,6 +10,8 @@ import (
 	"github.com/adohong4/carZone/driver"
 	carHandler "github.com/adohong4/carZone/handler/car"
 	engineHandler "github.com/adohong4/carZone/handler/engine"
+	loginHandler "github.com/adohong4/carZone/handler/login"
+	middleware "github.com/adohong4/carZone/middleware"
 	carService "github.com/adohong4/carZone/service/car"
 	engineService "github.com/adohong4/carZone/service/engine"
 	carStore "github.com/adohong4/carZone/store/car"
@@ -21,21 +23,21 @@ import (
 func main() {
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatalf("Không thể tải file .env: %v", err)
+		log.Fatalf("Cannot install file .env: %v", err)
 	}
 
-	// Khởi tạo kết nối cơ sở dữ liệu
+	// Connect database
 	if err := driver.InitDB(); err != nil {
-		log.Fatalf("Không thể khởi tạo kết nối cơ sở dữ liệu: %v", err)
+		log.Fatalf("Unable to initialize the database connection: %v", err)
 	}
 	defer driver.CloseDB()
 
 	db := driver.GetDB()
 	if db == nil {
-		log.Fatal("Kết nối cơ sở dữ liệu là nil, không thể tiếp tục")
+		log.Fatal("database connection is nil, unable to continue")
 	}
 
-	// Khởi tạo store, service và handler
+	// initialize store, service and handler
 	carStore := carStore.New(db)
 	carService := carService.NewCarService(carStore)
 
@@ -45,52 +47,58 @@ func main() {
 	carHandler := carHandler.NewCarHandler(carService)
 	engineHandler := engineHandler.NewEngineHandler(engineService)
 
-	// Khởi tạo router
+	// initialize router
 	router := mux.NewRouter()
 
-	// Thực thi schema
+	// excute schema
 	schemaFile := "store/schema.sql"
 	if err := executeSchemaFile(db, schemaFile); err != nil {
-		log.Fatalf("Không thể thực thi file schema: %v", err)
+		log.Fatalf("Cannot excute file schema: %v", err)
 	}
 
-	// Định nghĩa các route
-	router.HandleFunc("/cars/{id}", carHandler.GetCarById).Methods("GET")
-	router.HandleFunc("/cars", carHandler.GetCarByBrand).Methods("GET")
-	router.HandleFunc("/cars", carHandler.CreateCar).Methods("POST")
-	router.HandleFunc("/cars/{id}", carHandler.UpdateCar).Methods("PUT")
-	router.HandleFunc("/cars/{id}", carHandler.DeleteCar).Methods("DELETE")
+	router.HandleFunc("/login", loginHandler.LoginHandler).Methods("POST")
 
-	router.HandleFunc("/engines/{id}", engineHandler.GetEngineByID).Methods("GET")
-	router.HandleFunc("/engines", engineHandler.CreateEngine).Methods("POST")
-	router.HandleFunc("/engines/{id}", engineHandler.UpdateEngine).Methods("PUT")
-	router.HandleFunc("/engines/{id}", engineHandler.DeleteEngine).Methods("DELETE")
+	// Middleware
+	protected := router.PathPrefix("/").Subrouter()
+	protected.Use(middleware.AuthMiddleware)
 
-	// Lấy port từ biến môi trường
+	// Route
+	protected.HandleFunc("/cars/{id}", carHandler.GetCarById).Methods("GET")
+	protected.HandleFunc("/cars", carHandler.GetCarByBrand).Methods("GET")
+	protected.HandleFunc("/cars", carHandler.CreateCar).Methods("POST")
+	protected.HandleFunc("/cars/{id}", carHandler.UpdateCar).Methods("PUT")
+	protected.HandleFunc("/cars/{id}", carHandler.DeleteCar).Methods("DELETE")
+
+	protected.HandleFunc("/engines/{id}", engineHandler.GetEngineByID).Methods("GET")
+	protected.HandleFunc("/engines", engineHandler.CreateEngine).Methods("POST")
+	protected.HandleFunc("/engines/{id}", engineHandler.UpdateEngine).Methods("PUT")
+	protected.HandleFunc("/engines/{id}", engineHandler.DeleteEngine).Methods("DELETE")
+
+	// Port
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "8080" // Port mặc định nếu không có trong .env
+		port = "8080"
 	}
 
 	addr := fmt.Sprintf(":%s", port)
-	log.Printf("Máy chủ đang chạy trên port %s", port)
+	log.Printf("localhost run port %s", port)
 	log.Fatal(http.ListenAndServe(addr, router))
 }
 
 func executeSchemaFile(db *sql.DB, fileName string) error {
 	if db == nil {
-		return fmt.Errorf("kết nối cơ sở dữ liệu là nil")
+		return fmt.Errorf("database connection is nil")
 	}
 
 	sqlFile, err := os.ReadFile(fileName)
 	if err != nil {
-		return fmt.Errorf("không thể đọc file schema %s: %v", fileName, err)
+		return fmt.Errorf("Cannot read file schema %s: %v", fileName, err)
 	}
 
 	_, err = db.Exec(string(sqlFile))
 	if err != nil {
-		return fmt.Errorf("không thể thực thi file schema %s: %v", fileName, err)
+		return fmt.Errorf("Cannot excute file schema %s: %v", fileName, err)
 	}
-	log.Printf("Đã thực thi thành công file schema %s", fileName)
+	log.Printf("Successful fileSchema execution %s", fileName)
 	return nil
 }
