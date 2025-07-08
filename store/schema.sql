@@ -1,0 +1,56 @@
+-- -- Kích hoạt tiện ích mở rộng uuid-ossp để hỗ trợ kiểu UUID
+-- CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+-- -- Tạo bảng engine
+-- CREATE TABLE IF NOT EXISTS engine (
+--     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+--     displacement BIGINT NOT NULL,
+--     no_of_cylinders BIGINT NOT NULL,
+--     car_range BIGINT NOT NULL
+-- );
+
+-- -- Tạo bảng car
+-- CREATE TABLE IF NOT EXISTS car (
+--     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+--     name VARCHAR(100) NOT NULL,
+--     year INTEGER NOT NULL,
+--     brand VARCHAR(100) NOT NULL,
+--     fuel_type VARCHAR(50) NOT NULL,
+--     engine_id UUID REFERENCES engine(id),
+--     price NUMERIC NOT NULL,
+--     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+--     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+-- );
+
+-- -- Thêm dữ liệu mẫu vào bảng engine (tùy chọn để thử nghiệm)
+-- INSERT INTO engine (id, displacement, no_of_cylinders, car_range) 
+-- VALUES 
+--     (uuid_generate_v4(), 2000, 4, 500),  -- 2.0L, 4 xi-lanh, phạm vi 500km
+--     (uuid_generate_v4(), 3000, 6, 600);  -- 3.0L, 6 xi-lanh, phạm vi 600km
+
+-- -- Thêm dữ liệu mẫu vào bảng car (tùy chọn để thử nghiệm)
+-- -- Lưu ý: Thay <engine_id_1> và <engine_id_2> bằng id thực tế từ bảng engine sau khi chạy INSERT ở trên
+-- INSERT INTO car (id, name, year, brand, fuel_type, engine_id, price, created_at, updated_at)
+-- SELECT 
+--     uuid_generate_v4(), 
+--     'Camry', 
+--     2023, 
+--     'Toyota', 
+--     'Petrol', 
+--     id, 
+--     25000.00, 
+--     CURRENT_TIMESTAMP, 
+--     CURRENT_TIMESTAMP 
+-- FROM engine WHERE displacement = 2000
+-- UNION
+-- SELECT 
+--     uuid_generate_v4(), 
+--     'Civic', 
+--     2022, 
+--     'Honda', 
+--     'Hybrid', 
+--     id, 
+--     22000.00, 
+--     CURRENT_TIMESTAMP, 
+--     CURRENT_TIMESTAMP 
+-- FROM engine WHERE displacement = 3000;

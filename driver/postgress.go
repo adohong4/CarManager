@@ -6,11 +6,13 @@ import (
 	"log"
 	"os"
 	"time"
+
+	_ "github.com/lib/pq"
 )
 
 var db *sql.DB
 
-func InitDB() {
+func InitDB() error {
 	connStr := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
 		os.Getenv("DB_HOST"),
 		os.Getenv("DB_PORT"),
@@ -19,28 +21,50 @@ func InitDB() {
 		os.Getenv("DB_NAME"),
 	)
 
-	fmt.Println("Waiting for the database to be ready...")
-	time.Sleep(5 * time.Second) // Wait for 5 seconds before connecting
+	log.Println("Đang cố gắng kết nối tới cơ sở dữ liệu với DSN:", connStr)
 
-	db, err := sql.Open("postgres", connStr)
-	if err != nil {
-		log.Fatalf("Failed to connect to the database: %v", err)
+	// Thử kết nối với cơ sở dữ liệu, retry tối đa 5 lần
+	var err error
+	for i := 0; i < 5; i++ {
+		db, err = sql.Open("postgres", connStr)
+		if err != nil {
+			log.Printf("Không thể mở kết nối cơ sở dữ liệu: %v", err)
+			return err
+		}
+
+		// Kiểm tra kết nối
+		err = db.Ping()
+		if err == nil {
+			break
+		}
+		log.Printf("Không thể ping cơ sở dữ liệu, thử lại sau 5 giây... (%d/5)", i+1)
+		time.Sleep(5 * time.Second)
 	}
 
-	err = db.Ping()
 	if err != nil {
-		log.Fatalf("Failed to ping the database: %v", err)
+		log.Printf("Không thể kết nối tới cơ sở dữ liệu sau 5 lần thử: %v", err)
+		return err
 	}
 
-	fmt.Println("Database connection established successfully")
+	log.Println("Kết nối cơ sở dữ liệu thành công")
+	return nil
 }
 
 func GetDB() *sql.DB {
+	if db == nil {
+		log.Println("Cảnh báo: Kết nối cơ sở dữ liệu chưa được khởi tạo")
+	}
 	return db
 }
 
-func CloseDB() {
-	if err := db.Close(); err != nil {
-		log.Fatalf("Failed to close the database connection: %v", err)
+func CloseDB() error {
+	if db != nil {
+		if err := db.Close(); err != nil {
+			log.Printf("Không thể đóng kết nối cơ sở dữ liệu: %v", err)
+			return err
+		}
+		log.Println("Kết nối cơ sở dữ liệu đã được đóng")
+		db = nil
 	}
+	return nil
 }

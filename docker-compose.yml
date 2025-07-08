@@ -1,16 +1,16 @@
-version: '3.8'
+version: '3.9'
 
 services:
   app:
-    build:
+    build: .
     ports:
       - "8080:8080"
     environment:
-      - DB_HOST:db
-      - DB_PORT: 5432
-      - DB_USER: postgres
-      - DB_PASSWORD: 12345
-      - DB_NAME: postgres
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: 12345
+      DB_NAME: postgres
     depends_on:
       - db
 
@@ -18,14 +18,14 @@ services:
     build:
       context: db
       dockerfile: Dockerfile
-    enviroment:
-      POSTGRESS_USER: postgress
-      POSTGRESS_PASSWORD: 12345
-      POSTGRESS_DB: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 12345
+      POSTGRES_DB: postgres
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
-      - postgress-data: /var/lib/postgresql/data
+      - postgres-data:/var/lib/postgresql/data
 
-  volumes:
-    postgress-data: 
+volumes:
+  postgres-data:
