@@ -4,51 +4,38 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
-	"time"
 
+	"github.com/adohong4/carZone/core"
+	"github.com/adohong4/carZone/helpers"
 	"github.com/adohong4/carZone/models"
-	"github.com/golang-jwt/jwt/v4"
 )
 
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	var credentials models.Credentials
 	if err := json.NewDecoder(r.Body).Decode(&credentials); err != nil {
-		http.Error(w, "Invalid Request Body", http.StatusBadRequest)
+		// http.Error(w, "Invalid Request Body", http.StatusBadRequest)
+		core.SendErrorResponse(w, core.NewBadRequestError("Invalid request body").ErrorResponse)
 		return
 	}
+
 	valid := (credentials.UserName == "admin" && credentials.Password == "admin123")
-
 	if !valid {
-		http.Error(w, "Incorrect Username or Password", http.StatusUnauthorized)
+		//http.Error(w, "Incorrect Username or Password", http.StatusUnauthorized)
+		core.SendErrorResponse(w, core.NewAuthFailureError("Incorrect Username or Password").ErrorResponse)
 		return
 	}
 
-	tokenString, err := GenerateToken(credentials.UserName)
+	tokenString, err := helpers.GenerateToken(credentials.UserName)
 	if err != nil {
-		http.Error(w, "Failed to Username or Password", http.StatusUnauthorized)
 		log.Println("Error Generating token: ", err)
+		//http.Error(w, "Failed to Username or Password", http.StatusUnauthorized)
+		core.SendErrorResponse(w, core.NewAuthFailureError("Failed to Username or Password").ErrorResponse)
 		return
 	}
 
 	response := map[string]string{"token": tokenString}
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
-}
+	// w.Header().Set("Content-Type", "application/json")
+	// json.NewEncoder(w).Encode(response)
+	core.NewOK("Login successful", response).Send(w)
 
-func GenerateToken(UserName string) (string, error) {
-	expiration := time.Now().Add(24 * time.Hour)
-
-	claims := &jwt.StandardClaims{
-		ExpiresAt: expiration.Unix(),
-		IssuedAt:  time.Now().Unix(),
-		Subject:   UserName,
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	signedToken, err := token.SignedString([]byte("some_value"))
-	if err != nil {
-		return "", err
-	}
-
-	return signedToken, nil
 }

@@ -9,8 +9,8 @@ import (
 )
 
 type ErrorResponse struct {
-	Message string
-	Status  int
+	Message string `json:"message"`
+	Status  int    `json:"status"`
 }
 
 // return error message
@@ -24,6 +24,22 @@ func NewErrorResponse(message string, status int) *ErrorResponse {
 		Message: message,
 		Status:  status,
 	}
+}
+
+type ErrorResponseInterface interface {
+	Error() string
+	GetStatus() int
+	GetMessage() string
+}
+
+// GetStatus trả về mã trạng thái
+func (e *ErrorResponse) GetStatus() int {
+	return e.Status
+}
+
+// GetMessage trả về thông điệp lỗi
+func (e *ErrorResponse) GetMessage() string {
+	return e.Message
 }
 
 type ConflictRequestError struct {
@@ -99,9 +115,9 @@ func NewForbiddenError(message ...string) *ForbiddenError {
 // Send Error Response
 func SendErrorResponse(w http.ResponseWriter, err *ErrorResponse) {
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(err.Status)
+	w.WriteHeader(err.GetStatus())
 	json.NewEncoder(w).Encode(map[string]interface{}{
-		"status":  err.Status,
-		"message": err.Message,
+		"status":  err.GetStatus(),
+		"message": err.GetMessage(),
 	})
 }
