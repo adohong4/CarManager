@@ -15,6 +15,8 @@ services:
       JAEGER_AGENT_PORT: 4318
     depends_on:
       - db
+      - jaeger
+      - prometheus
 
   db:
     build:
@@ -37,5 +39,24 @@ services:
       - "14268:14268"
       - "16686:16686"
 
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: "admin"
+    volumes:
+      - grafana-data:/var/lib/grafana
+
 volumes:
   postgres-data:
+  grafana-data:
