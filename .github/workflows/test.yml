@@ -19,7 +19,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v3
       with:
-        go-version: '1.24.4'  # Thay đổi phiên bản Go nếu cần
+        go-version: '1.24.4'  
 
     - name: Install dependencies
       run: go mod tidy
@@ -28,10 +28,10 @@ jobs:
       run: go test ./... -v
 
     - name: Build
-      run: go build -o CarZone ./...  # Thay đổi tên ứng dụng nếu cần
+      run: go build -o CarZone ./...  
 
     - name: Upload build artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v3.1.2  
       with:
         name: CarZone
-        path: CarZone  # Đường dẫn đến tệp nhị phân đã xây dựng
+        path: CarZone  
