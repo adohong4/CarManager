@@ -21,7 +21,7 @@ func TestGetCarById(t *testing.T) {
 	store := New(db)
 
 	carID := uuid.New().String()
-	mock.ExpectQuery("SELECT c.id, c.name, c.year, c.brand").
+	mock.ExpectQuery("SELECT c.id, c.name, c.year, c.brand, c.fuel_type, c.price, c.created_at, c.updated_at").
 		WithArgs(carID).
 		WillReturnRows(sqlmock.NewRows([]string{"id", "name", "year", "brand", "fuel_type", "price", "created_at", "updated_at"}).
 			AddRow(carID, "Test Car", 2020, "Test Brand", "Petrol", 20000, time.Now(), time.Now()))
@@ -42,7 +42,7 @@ func TestGetCarByBrand(t *testing.T) {
 	store := New(db)
 
 	brand := "Test Brand"
-	mock.ExpectQuery("SELECT c.id, c.name, c.year, c.brand").
+	mock.ExpectQuery("SELECT c.id, c.name, c.year, c.brand, c.fuel_type, c.price, c.created_at, c.updated_at").
 		WithArgs(brand).
 		WillReturnRows(sqlmock.NewRows([]string{"id", "name", "year", "brand", "fuel_type", "price", "created_at", "updated_at"}).
 			AddRow(uuid.New().String(), "Test Car 1", 2020, brand, "Petrol", 20000, time.Now(), time.Now()).
@@ -69,9 +69,9 @@ func TestCreateCar(t *testing.T) {
 		Year:     "2022",
 		Brand:    "New Brand",
 		FuelType: "Electric",
-		Engine: models.Engine{ // Sử dụng giá trị kiểu Engine
+		Engine: models.Engine{
 			EngineID:      engineID,
-			Displacement:  1500, // Thêm các trường cần thiết
+			Displacement:  1500,
 			NoOfCylinders: 4,
 			CarRange:      300,
 		},
@@ -90,7 +90,7 @@ func TestCreateCar(t *testing.T) {
 
 	car, err := store.CreateCar(context.Background(), carReq)
 	assert.NoError(t, err)
-	assert.Equal(t, carID, car.ID)
+	assert.Equal(t, carID.String(), car.ID.String())
 }
 
 func TestUpdateCar(t *testing.T) {
@@ -102,13 +102,13 @@ func TestUpdateCar(t *testing.T) {
 
 	store := New(db)
 
-	carID := uuid.New().String()
+	carID := uuid.New()
 	carReq := &models.CarRequest{
 		Name:     "Updated Car",
 		Year:     "2023",
 		Brand:    "Updated Brand",
 		FuelType: "Hybrid",
-		Engine: models.Engine{ // Sử dụng giá trị kiểu Engine
+		Engine: models.Engine{
 			EngineID:      uuid.New(),
 			Displacement:  1600,
 			NoOfCylinders: 4,
@@ -119,13 +119,13 @@ func TestUpdateCar(t *testing.T) {
 
 	mock.ExpectBegin()
 	mock.ExpectExec("UPDATE car").
-		WithArgs(carReq.Name, carReq.Year, carReq.Brand, carReq.FuelType, carReq.Engine.EngineID, carReq.Price, sqlmock.AnyArg(), carID).
+		WithArgs(carReq.Name, carReq.Year, carReq.Brand, carReq.FuelType, carReq.Engine.EngineID, carReq.Price, sqlmock.AnyArg(), carID.String()).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectCommit()
 
-	car, err := store.UpdateCar(context.Background(), carID, carReq)
+	car, err := store.UpdateCar(context.Background(), carID.String(), carReq)
 	assert.NoError(t, err)
-	assert.Equal(t, carID, car.ID)
+	assert.Equal(t, carID.String(), car.ID.String())
 }
 
 func TestDeleteCar(t *testing.T) {

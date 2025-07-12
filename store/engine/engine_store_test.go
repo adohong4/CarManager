@@ -27,7 +27,7 @@ func TestEngineById(t *testing.T) {
 
 	engine, err := store.EngineById(context.Background(), engineID)
 	assert.NoError(t, err)
-	assert.Equal(t, engineID, engine.EngineID)
+	assert.Equal(t, engineID, engine.EngineID.String())
 	assert.Equal(t, 2000, engine.Displacement)
 }
 
@@ -50,13 +50,13 @@ func TestCreateEngine(t *testing.T) {
 
 	mock.ExpectBegin()
 	mock.ExpectExec("INSERT INTO engine").
-		WithArgs(engineID, engineReq.Displacement, engineReq.NoOfCylinders, engineReq.CarRange).
+		WithArgs(engineID.String(), engineReq.Displacement, engineReq.NoOfCylinders, engineReq.CarRange).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectCommit()
 
 	engine, err := store.CreateEngine(context.Background(), engineReq)
 	assert.NoError(t, err)
-	assert.Equal(t, engineID, engine.EngineID)
+	assert.Equal(t, engineID.String(), engine.EngineID.String())
 	assert.Equal(t, engineReq.Displacement, engine.Displacement)
 }
 
@@ -84,7 +84,7 @@ func TestEngineUpdate(t *testing.T) {
 
 	engine, err := store.EngineUpdate(context.Background(), engineID, engineReq)
 	assert.NoError(t, err)
-	assert.Equal(t, engineID, engine.EngineID)
+	assert.Equal(t, engineID, engine.EngineID.String())
 	assert.Equal(t, engineReq.Displacement, engine.Displacement)
 }
 
@@ -110,5 +110,5 @@ func TestEngineDelete(t *testing.T) {
 
 	engine, err := store.EngineDelete(context.Background(), engineID)
 	assert.NoError(t, err)
-	assert.Equal(t, engineID, engine.EngineID)
+	assert.Equal(t, engineID, engine.EngineID.String())
 }
