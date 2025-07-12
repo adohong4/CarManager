@@ -24,14 +24,11 @@ jobs:
     - name: Install dependencies
       run: go mod tidy
 
-    - name: Run tests
-      run: go test ./... -v
-
     - name: Build
-      run: go build -o CarZone ./...  
+      run: go build -v ./...  
 
-    - name: Upload build artifact
-      uses: actions/upload-artifact@v3.1.2  
-      with:
-        name: CarZone
-        path: CarZone  
+    - name: Test
+      run: go test -v ./... 
+
+    
+
