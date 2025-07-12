@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log"
 
 	"github.com/adohong4/carZone/models"
 	"github.com/google/uuid"
@@ -28,16 +29,17 @@ func (e EngineSstore) EngineById(ctx context.Context, id string) (models.Engine,
 
 	tx, err := e.db.BeginTx(ctx, nil)
 	if err != nil {
+		log.Fatalf("Failed to begin transaction: %v", err)
 		return engine, err
 	}
 	defer func() {
 		if err != nil {
 			if rbErr := tx.Rollback(); rbErr != nil {
-				fmt.Printf("Transaction rollback error: %v\n", rbErr)
+				log.Printf("Transaction rollback error: %v\n", rbErr)
 			}
 		} else {
 			if cmErr := tx.Commit(); cmErr != nil {
-				fmt.Printf("Transaction commit error: %v\n", cmErr)
+				log.Printf("Transaction commit error: %v\n", cmErr)
 			}
 		}
 	}()
@@ -50,9 +52,10 @@ func (e EngineSstore) EngineById(ctx context.Context, id string) (models.Engine,
 		if errors.Is(err, sql.ErrNoRows) {
 			return engine, nil // No rows found, return empty engine
 		}
+		log.Printf("Error querying engine by ID: %v", err)
 		return engine, err
 	}
-	return engine, err
+	return engine, nil
 }
 
 func (e EngineSstore) CreateEngine(ctx context.Context, engineReq *models.EngineRequest) (models.Engine, error) {
@@ -62,16 +65,17 @@ func (e EngineSstore) CreateEngine(ctx context.Context, engineReq *models.Engine
 
 	tx, err := e.db.BeginTx(ctx, nil)
 	if err != nil {
+		log.Fatalf("Failed to begin transaction: %v", err)
 		return models.Engine{}, err
 	}
 	defer func() {
 		if err != nil {
 			if rbErr := tx.Rollback(); rbErr != nil {
-				fmt.Printf("Transaction rollback error: %v\n", rbErr)
+				log.Printf("Transaction rollback error: %v\n", rbErr)
 			}
 		} else {
 			if cmErr := tx.Commit(); cmErr != nil {
-				fmt.Printf("Transaction commit error: %v\n", cmErr)
+				log.Printf("Transaction commit error: %v\n", cmErr)
 			}
 		}
 	}()
@@ -83,6 +87,7 @@ func (e EngineSstore) CreateEngine(ctx context.Context, engineReq *models.Engine
 		engineID, engineReq.Displacement, engineReq.NoOfCylinders, engineReq.CarRange,
 	)
 	if err != nil {
+		log.Printf("Error inserting engine: %v", err)
 		return models.Engine{}, err
 	}
 
