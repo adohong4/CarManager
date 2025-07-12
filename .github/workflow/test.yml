@@ -1,0 +1,37 @@
+name: Go CI
+
+on:
+  push:
+    branches:
+      - master 
+  pull_request:
+    branches:
+      - master  
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: actions/setup-go@v3
+      with:
+        go-version: '1.24.4'  # Thay đổi phiên bản Go nếu cần
+
+    - name: Install dependencies
+      run: go mod tidy
+
+    - name: Run tests
+      run: go test ./... -v
+
+    - name: Build
+      run: go build -o CarZone ./...  # Thay đổi tên ứng dụng nếu cần
+
+    - name: Upload build artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: CarZone
+        path: CarZone  # Đường dẫn đến tệp nhị phân đã xây dựng
